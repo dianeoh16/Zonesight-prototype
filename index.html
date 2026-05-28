@@ -64,6 +64,13 @@
       line-height: 1;
     }
 
+    .status {
+      margin-left: auto;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
     main {
       max-width: 1200px;
       margin: 0 auto;
@@ -390,6 +397,16 @@
       .map {
         height: 460px;
       }
+
+      .header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .status {
+        margin-left: 0;
+        margin-top: 8px;
+      }
     }
   </style>
 </head>
@@ -402,6 +419,7 @@
         <p class="team">School Zone Guardians</p>
         <h1>ZoneSight</h1>
       </div>
+      <div class="status">샘플 모드</div>
     </div>
   </header>
 
@@ -419,19 +437,19 @@
     <section class="stats">
       <div class="card">
         <span>분석 스쿨존</span>
-        <strong>5곳</strong>
+        <strong id="statZones">5곳</strong>
       </div>
       <div class="card">
         <span>평균 위험도</span>
-        <strong>64점</strong>
+        <strong id="statAvgScore">64점</strong>
       </div>
       <div class="card">
         <span>매우높음 구역</span>
-        <strong>2곳</strong>
+        <strong id="statHighRisk">2곳</strong>
       </div>
       <div class="card">
         <span>위험운전 이벤트</span>
-        <strong>175건</strong>
+        <strong id="statTotalEvents">175건</strong>
       </div>
     </section>
 
@@ -446,11 +464,7 @@
           <small>사고다발·초단위 운행기록·TRIP 위험운전 결합</small>
         </div>
 
-        <button class="pin red" style="left:67%; top:31%" onclick="selectZone(0)">88</button>
-        <button class="pin red" style="left:44%; top:62%" onclick="selectZone(1)">76</button>
-        <button class="pin orange" style="left:28%; top:39%" onclick="selectZone(2)">64</button>
-        <button class="pin orange" style="left:73%; top:70%" onclick="selectZone(3)">52</button>
-        <button class="pin yellow" style="left:18%; top:73%" onclick="selectZone(4)">39</button>
+        <div id="mapPins"></div>
 
         <div class="legend">
           <div><span class="dot red"></span>매우높음</div>
@@ -462,62 +476,42 @@
 
       <aside class="side">
         <div class="card detail">
-          <h3 id="zoneName">해솔초등학교 어린이보호구역</h3>
-          <p class="addr" id="zoneAddr">서울 강서구 공항대로 인근</p>
+          <h3 id="zoneName">선택된 지역 없음</h3>
+          <p class="addr" id="zoneAddr">--</p>
 
           <div class="score-box" id="scoreBox">
             <span>위험도</span>
-            <strong id="score">88</strong>
+            <strong id="score">--</strong>
           </div>
 
           <div class="metrics">
             <div class="metric">
               <span>어린이 사고다발</span>
-              <strong id="childHotspots">4</strong>
+              <strong id="childHotspots">--</strong>
             </div>
             <div class="metric">
               <span>스쿨존 사고다발</span>
-              <strong id="schoolzoneHotspots">3</strong>
+              <strong id="schoolzoneHotspots">--</strong>
             </div>
             <div class="metric">
               <span>초단위 위험 이벤트</span>
-              <strong id="dtgEvents">42</strong>
+              <strong id="dtgEvents">--</strong>
             </div>
             <div class="metric">
               <span>TRIP 위험운전</span>
-              <strong id="tripEvents">18</strong>
+              <strong id="tripEvents">--</strong>
             </div>
           </div>
 
           <div class="notice" id="recommend">
-            보호펜스, 노란 횡단보도, 고정식 단속카메라 우선 검토
+            데이터를 로드 중입니다...
           </div>
         </div>
 
         <div class="card rank">
           <h3>우선관리 후보</h3>
-          <div class="rank-row">
-            <div>
-              <b>1. 해솔초등학교</b>
-              <small>보호펜스·단속카메라 우선 검토</small>
-            </div>
-            <span class="badge">88점</span>
-          </div>
-
-          <div class="rank-row">
-            <div>
-              <b>2. 늘봄초등학교</b>
-              <small>과속방지턱·신호시간 조정</small>
-            </div>
-            <span class="badge">76점</span>
-          </div>
-
-          <div class="rank-row">
-            <div>
-              <b>3. 푸른초등학교</b>
-              <small>노면표시·이동식 단속 검토</small>
-            </div>
-            <span class="badge">64점</span>
+          <div id="rankContainer">
+            <p style="color: #999; margin: 12px 0;">로드 중...</p>
           </div>
         </div>
 
@@ -569,77 +563,188 @@
   </main>
 
   <script>
-    const zones = [
-      {
-        name: "해솔초등학교 어린이보호구역",
-        addr: "서울 강서구 공항대로 인근",
-        score: 88,
-        color: "#ef4444",
-        child: 4,
-        schoolzone: 3,
-        dtg: 42,
-        trip: 18,
-        recommend: "보호펜스, 노란 횡단보도, 고정식 단속카메라 우선 검토"
-      },
-      {
-        name: "늘봄초등학교 어린이보호구역",
-        addr: "서울 송파구 백제고분로 인근",
-        score: 76,
-        color: "#ef4444",
-        child: 3,
-        schoolzone: 2,
-        dtg: 35,
-        trip: 12,
-        recommend: "과속방지턱 보강, 보행자 신호시간 조정 검토"
-      },
-      {
-        name: "푸른초등학교 어린이보호구역",
-        addr: "서울 마포구 월드컵북로 인근",
-        score: 64,
-        color: "#f97316",
-        child: 2,
-        schoolzone: 1,
-        dtg: 22,
-        trip: 10,
-        recommend: "진입부 노면표시, 이동식 단속, 통학 시간 안내표지 설치"
-      },
-      {
-        name: "별빛초등학교 어린이보호구역",
-        addr: "서울 노원구 동일로 인근",
-        score: 52,
-        color: "#f97316",
-        child: 1,
-        schoolzone: 1,
-        dtg: 16,
-        trip: 7,
-        recommend: "우회전 일시정지 안내, 보행섬·신호등 위치 점검"
-      },
-      {
-        name: "한강초등학교 어린이보호구역",
-        addr: "서울 영등포구 여의대방로 인근",
-        score: 39,
-        color: "#eab308",
-        child: 1,
-        schoolzone: 0,
-        dtg: 9,
-        trip: 4,
-        recommend: "가로등, 노면표시 재도색, 불법주정차 단속 연계"
-      }
-    ];
+    let zones = [];
+    let selectedId = null;
 
-    function selectZone(index) {
-      const zone = zones[index];
+    function getColorClass(grade) {
+      if (grade === "매우높음") return "red";
+      if (grade === "높음") return "orange";
+      if (grade === "보통") return "yellow";
+      return "green";
+    }
+
+    function selectZone(id) {
+      selectedId = id;
+      const zone = zones.find(z => z.id === id);
+      if (!zone) return;
 
       document.getElementById("zoneName").textContent = zone.name;
-      document.getElementById("zoneAddr").textContent = zone.addr;
+      document.getElementById("zoneAddr").textContent = zone.address || zone.district;
       document.getElementById("score").textContent = zone.score;
-      document.getElementById("childHotspots").textContent = zone.child;
-      document.getElementById("schoolzoneHotspots").textContent = zone.schoolzone;
-      document.getElementById("dtgEvents").textContent = zone.dtg;
-      document.getElementById("tripEvents").textContent = zone.trip;
-      document.getElementById("recommend").textContent = zone.recommend;
-      document.getElementById("scoreBox").style.background = zone.color;
+      document.getElementById("childHotspots").textContent = zone.childHotspots || 0;
+      document.getElementById("schoolzoneHotspots").textContent = zone.schoolzoneHotspots || 0;
+      document.getElementById("dtgEvents").textContent = zone.dtgEvents || 0;
+      document.getElementById("tripEvents").textContent = zone.tripEvents || 0;
+      document.getElementById("recommend").textContent = zone.recommend || "정보 없음";
+      
+      const color = getColorClass(zone.grade);
+      const colorMap = {
+        red: "#ef4444",
+        orange: "#f97316",
+        yellow: "#eab308",
+        green: "#22c55e"
+      };
+      document.getElementById("scoreBox").style.background = colorMap[color];
     }
+
+    function render() {
+      // Update stats
+      const avgScore = zones.length > 0 
+        ? Math.round(zones.reduce((sum, z) => sum + z.score, 0) / zones.length)
+        : 0;
+      const highRiskCount = zones.filter(z => z.grade === "매우높음").length;
+      const totalEvents = zones.reduce((sum, z) => sum + (z.dtgEvents || 0) + (z.tripEvents || 0), 0);
+
+      document.getElementById("statZones").textContent = zones.length + "곳";
+      document.getElementById("statAvgScore").textContent = avgScore + "점";
+      document.getElementById("statHighRisk").textContent = highRiskCount + "곳";
+      document.getElementById("statTotalEvents").textContent = totalEvents + "건";
+
+      // Render pins
+      const mapPins = document.getElementById("mapPins");
+      mapPins.innerHTML = "";
+      zones.forEach((zone, index) => {
+        const pin = document.createElement("button");
+        pin.className = `pin ${getColorClass(zone.grade)}`;
+        pin.style.left = zone.x + "%";
+        pin.style.top = zone.y + "%";
+        pin.textContent = zone.score;
+        pin.onclick = () => selectZone(zone.id);
+        mapPins.appendChild(pin);
+      });
+
+      // Render rank list
+      const rankContainer = document.getElementById("rankContainer");
+      rankContainer.innerHTML = "";
+      zones.slice(0, 3).forEach((zone, index) => {
+        const rankRow = document.createElement("div");
+        rankRow.className = "rank-row";
+        rankRow.innerHTML = `
+          <div>
+            <b>${index + 1}. ${zone.name}</b>
+            <small>${zone.recommend || "정보 없음"}</small>
+          </div>
+          <span class="badge">${zone.score}점</span>
+        `;
+        rankContainer.appendChild(rankRow);
+      });
+
+      // Select first zone
+      if (zones.length > 0 && !selectedId) {
+        selectZone(zones[0].id);
+      }
+    }
+
+    async function loadRealData() {
+      try {
+        const response = await fetch("./data/zonesight-data.json");
+        const data = await response.json();
+
+        zones = data.zones || [];
+
+        document.querySelector(".status").textContent =
+          `실제 공공데이터 반영 · ${new Date(data.updatedAt).toLocaleDateString("ko-KR")} 갱신`;
+
+        render();
+      } catch (error) {
+        console.error("Data loading failed:", error);
+        document.querySelector(".status").textContent =
+          "데이터 로딩 실패 · 샘플 모드";
+        
+        // Load sample data
+        zones = [
+          {
+            id: "SZ-0001",
+            name: "해솔초등학교 어린이보호구역",
+            district: "서울 강서구",
+            address: "서울 강서구 공항대로 인근",
+            score: 88,
+            grade: "매우높음",
+            childHotspots: 4,
+            schoolzoneHotspots: 3,
+            dtgEvents: 42,
+            tripEvents: 18,
+            recommend: "보호펜스, 노란 횡단보도, 고정식 단속카메라 우선 검토",
+            x: 67,
+            y: 31
+          },
+          {
+            id: "SZ-0002",
+            name: "늘봄초등학교 어린이보호구역",
+            district: "서울 송파구",
+            address: "서울 송파구 백제고분로 인근",
+            score: 76,
+            grade: "매우높음",
+            childHotspots: 3,
+            schoolzoneHotspots: 2,
+            dtgEvents: 35,
+            tripEvents: 12,
+            recommend: "과속방지턱 보강, 보행자 신호시간 조정 검토",
+            x: 44,
+            y: 62
+          },
+          {
+            id: "SZ-0003",
+            name: "푸른초등학교 어린이보호구역",
+            district: "서울 마포구",
+            address: "서울 마포구 월드컵북로 인근",
+            score: 64,
+            grade: "높음",
+            childHotspots: 2,
+            schoolzoneHotspots: 1,
+            dtgEvents: 22,
+            tripEvents: 10,
+            recommend: "진입부 노면표시, 이동식 단속, 통학 시간 안내표지 설치",
+            x: 28,
+            y: 39
+          },
+          {
+            id: "SZ-0004",
+            name: "별빛초등학교 어린이보호구역",
+            district: "서울 노원구",
+            address: "서울 노원구 동일로 인근",
+            score: 52,
+            grade: "높음",
+            childHotspots: 1,
+            schoolzoneHotspots: 1,
+            dtgEvents: 16,
+            tripEvents: 7,
+            recommend: "우회전 일시정지 안내, 보행섬·신호등 위치 점검",
+            x: 73,
+            y: 70
+          },
+          {
+            id: "SZ-0005",
+            name: "한강초등학교 어린이보호구역",
+            district: "서울 영등포구",
+            address: "서울 영등포구 여의대방로 인근",
+            score: 39,
+            grade: "보통",
+            childHotspots: 1,
+            schoolzoneHotspots: 0,
+            dtgEvents: 9,
+            tripEvents: 4,
+            recommend: "가로등, 노면표시 재도색, 불법주정차 단속 연계",
+            x: 18,
+            y: 73
+          }
+        ];
+        render();
+      }
+    }
+
+    // Initialize
+    loadRealData();
   </script>
 </body>
 </html>
